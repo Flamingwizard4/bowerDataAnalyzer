@@ -67,7 +67,7 @@ for trial in set(trial_names): #unique values
     trialHourly = trialHourly[trialHourly['Day'] <= (day + 4)]
 
 
-
+#To Do:
 
 #append dailys to larger graphing dataframe
 #calculate mean/standard deviation per day
