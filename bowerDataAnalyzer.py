@@ -73,6 +73,6 @@ for trial in set(trial_names): #unique values
 #calculate mean/standard deviation per day
 
 #append hourlys
-#calculate ANOVA, Tukey's HSD TestData
+#calculate ANOVA, Tukey's HSD Test
 
 #For each metric, we want the daily, as well as the averaged hourly for building hours on building days only.
