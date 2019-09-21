@@ -1,3 +1,5 @@
+#For each metric, we want the daily, as well as the averaged hourly for building hours on building days only.
+
 import pandas as pd
 import numpy as np
 import os, re, pdb
@@ -462,7 +464,6 @@ hourlyBowersPar = pd.concat((hourlyBowersPar.iloc[:, :50], hourlyBowersPar.iloc[
 dailyVolumesPar.dropna(axis = 1, how = 'all', inplace = True)
 hourlyVolumesPar = pd.concat((hourlyVolumesPar.iloc[:, :50], hourlyVolumesPar.iloc[:, 50:].dropna(axis = 1, how = 'all', inplace = False)), axis = 1)
 
-
 #writing to excel file
 with pd.ExcelWriter(os.path.join(cur_dir, 'stats.xlsx'), engine = "openpyxl") as writer:
     #dailyVolumesF1.to_excel(writer, sheet_name = 'dailyVolumes')
@@ -534,5 +535,4 @@ print('Nova3H: ', nova3H.fit())
 #To Do:
 
 #include nonaveraged bowerindex in one vein
-
-#For each metric, we want the daily, as well as the averaged hourly for building hours on building days only.
+#get unbalanced anova analysis
