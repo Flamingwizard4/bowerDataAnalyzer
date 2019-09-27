@@ -1,11 +1,11 @@
-#For each metric, we want the daily, as well as the averaged hourly for building hours on building days only.
-
 import pandas as pd
 import numpy as np
 import os, re, pdb
 import matplotlib.pyplot as plt
 import seaborn as sns
-from statsmodels.stats.anova import AnovaRM
+#from statsmodels.stats.anova import AnovaRM
+import statsmodels.formula.api as smf
+import statsmodels.stats.multicomp as multi
 
 #directories
 cur_dir = os.getcwd()
@@ -70,18 +70,27 @@ hourlyAvgBowersPar = pd.DataFrame(columns = (['Trial'] + dailyCols))
 #daily ANOVA
 dailyNova1 = pd.DataFrame(columns = ['Trial', 'Day', 'BowerIndex']) #one-way F1 daily
 
-dailyNova2 = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex']) #two-way F1 daily
+dailyNova2 = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #two-way F1 daily
 
-dailyNova2Plus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex']) #two-way F1 + CV, TI, & MC daily
+dailyNova2Plus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #two-way F1 + CV, TI, & MC daily
+
+dailyNova2Minus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #F1 pooled
+
+dailyPooled = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #F1 and Pit pooled
 
 dailyNova3 = pd.DataFrame(columns = ['Trial', 'Day', 'F1Bool', 'BowerIndex']) #two-way F1-pooled vs parental daily
+
 
 #hourly averaged ANOVA
 hourlyNova1 = pd.DataFrame(columns = ['Trial', 'Day', 'BowerIndex']) #one-way F1 daily hourly averages
 
-hourlyNova2 = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex']) #two-way F1 daily hourly averages
+hourlyNova2 = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #two-way F1 daily hourly averages
 
-hourlyNova2Plus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex']) #two-way F1 + CV, TI, & MC daily hourly averages
+hourlyNova2Plus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #two-way F1 + CV, TI, & MC daily hourly averages
+
+hourlyNova2Minus = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #F1 pooled
+
+hourlyPooled = pd.DataFrame(columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior']) #F1 and Pit pooled
 
 hourlyNova3 = pd.DataFrame(columns = ['Trial', 'Day', 'F1Bool', 'BowerIndex']) #two-way F1-pooled vs parental daily hourly average
 
@@ -198,12 +207,17 @@ for trial in set(f1_trial_names):
     nova1Chunk['Day'] = [int(x) for x in range(1, trialDays + 1)]
     nova1Chunk['BowerIndex'] = trialDaily['bowerAvg'].values
 
-    nova2Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'Lineage', 'BowerIndex'])
+    nova2Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior'])
 
     nova2Chunk['Trial'] = [trial] * trialDays
     nova2Chunk['Day'] = [int(x) for x in range(1, trialDays + 1)]
     nova2Chunk['Lineage'] = [trial[:5]] * trialDays
     nova2Chunk['BowerIndex'] = trialDaily['bowerAvg'].values
+    nova2Chunk['Behavior'] = "Cross"
+
+    nova2MinusChunk = nova2Chunk.copy()
+    nova2MinusChunk['Lineage'] = 'F1'
+
 
     nova3Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'F1Bool', 'BowerIndex'])
 
@@ -218,18 +232,25 @@ for trial in set(f1_trial_names):
     hourlyNova2Chunk = nova2Chunk.copy()
     hourlyNova2Chunk['BowerIndex'] = trialHourlyAvg['bowerAvg'].values
 
+    hourlyNova2MinusChunk = nova2MinusChunk.copy()
+    hourlyNova2MinusChunk['BowerIndex'] = trialHourlyAvg['bowerAvg'].values
+
     hourlyNova3Chunk = nova3Chunk.copy()
     hourlyNova3Chunk['BowerIndex'] = trialHourlyAvg['bowerAvg'].values
 
     dailyNova1 = pd.concat([dailyNova1, nova1Chunk], ignore_index = True)
-    dailyNova2 = pd.concat([dailyNova2, nova2Chunk], ignore_index = True)
-    dailyNova2Plus = pd.concat([dailyNova2Plus, nova2Chunk], ignore_index = True)
+    dailyNova2 = pd.concat([dailyNova2, nova2Chunk], ignore_index = True, sort = False)
+    dailyNova2Plus = pd.concat([dailyNova2Plus, nova2Chunk], ignore_index = True, sort = False)
     dailyNova3 = pd.concat([dailyNova3, nova3Chunk], ignore_index = True)
+    dailyNova2Minus = pd.concat([dailyNova2Minus, nova2MinusChunk], ignore_index = True)
+    dailyPooled = pd.concat([dailyPooled, nova2MinusChunk], ignore_index = True)
 
     hourlyNova1 = pd.concat([hourlyNova1, hourlyNova1Chunk], ignore_index = True)
-    hourlyNova2 = pd.concat([hourlyNova2, hourlyNova2Chunk], ignore_index = True)
-    hourlyNova2Plus = pd.concat([hourlyNova2Plus, hourlyNova2Chunk], ignore_index = True)
+    hourlyNova2 = pd.concat([hourlyNova2, hourlyNova2Chunk], ignore_index = True, sort = False)
+    hourlyNova2Plus = pd.concat([hourlyNova2Plus, hourlyNova2Chunk], ignore_index = True, sort = False)
     hourlyNova3 = pd.concat([hourlyNova3, hourlyNova3Chunk], ignore_index = True)
+    hourlyNova2Minus = pd.concat([hourlyNova2Minus, hourlyNova2MinusChunk], ignore_index = True)
+    hourlyPooled = pd.concat([hourlyPooled, hourlyNova2MinusChunk], ignore_index = True)
 
 
 #print('nova1: \n', dailyNova1)
@@ -389,18 +410,35 @@ for trial in set(par_trial_names): #unique values
     #ANOVA 2+
     trialDays = trialDaily.shape[0]
 
-    nova2Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'Lineage', 'BowerIndex'])
+    nova2Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'Lineage', 'BowerIndex', 'Behavior'])
 
     nova2Chunk['Trial'] = [trial] * trialDays
     nova2Chunk['Day'] = [int(x) for x in range(1, trialDays + 1)]
     nova2Chunk['Lineage'] = [trial[:2]] * trialDays
     nova2Chunk['BowerIndex'] = trialDaily['bowerAvg'].values
+    if (trial[:2] == 'CV' or trial[:2] == 'TI'):
+        nova2Chunk['Behavior'] = 'Pit'
+    else:
+        nova2Chunk['Behavior'] = 'Castle'
+
+    dailyPooledChunk = nova2Chunk.copy()
+    if (trial[:2] == 'CV' or trial[:2] == 'TI'):
+        dailyPooledChunk['Lineage'] = 'Pit'
+
 
     hourlyNova2Chunk = nova2Chunk.copy()
     hourlyNova2Chunk['BowerIndex'] = trialHourlyAvg['bowerAvg'].values
 
-    dailyNova2Plus = pd.concat([dailyNova2Plus, nova2Chunk], ignore_index = True)
-    hourlyNova2Plus = pd.concat([hourlyNova2Plus, hourlyNova2Chunk], ignore_index = True)
+    hourlyPooledChunk = dailyPooledChunk.copy()
+    hourlyPooledChunk['BowerIndex'] = trialHourlyAvg['bowerAvg'].values
+
+    dailyNova2Plus = pd.concat([dailyNova2Plus, nova2Chunk], ignore_index = True, sort = False)
+    dailyNova2Minus = pd.concat([dailyNova2Minus, nova2Chunk], ignore_index = True)
+    dailyPooled = pd.concat([dailyPooled, dailyPooledChunk], ignore_index = True)
+
+    hourlyNova2Plus = pd.concat([hourlyNova2Plus, hourlyNova2Chunk], ignore_index = True, sort = False)
+    hourlyNova2Minus = pd.concat([hourlyNova2Minus, hourlyNova2Chunk], ignore_index = True)
+    hourlyPooled = pd.concat([hourlyPooled, hourlyPooledChunk], ignore_index = True)
 
     #ANOVA3
     nova3Chunk = pd.DataFrame(np.nan, index = [int(x) for x in range(trialDays)], columns = ['Trial', 'Day', 'F1Bool', 'BowerIndex'])
@@ -464,8 +502,21 @@ hourlyBowersPar = pd.concat((hourlyBowersPar.iloc[:, :50], hourlyBowersPar.iloc[
 dailyVolumesPar.dropna(axis = 1, how = 'all', inplace = True)
 hourlyVolumesPar = pd.concat((hourlyVolumesPar.iloc[:, :50], hourlyVolumesPar.iloc[:, 50:].dropna(axis = 1, how = 'all', inplace = False)), axis = 1)
 
-#writing to excel file
+
+'''displaying data tables
+print('Daily Bowers F1: \n', dailyBowersF1)
+print('\n\n\n')
+print('Daily Bowers Parentals: \n', dailyBowersPar)
+print('\n\n\n')
+print('Hourly Average Bowers F1: \n', hourlyAvgBowersF1)
+print('\n\n\n')
+print('Hourly Average Bowers Parentals: \n', hourlyAvgBowersPar)
+'''
+
+
+'''writing to excel file
 with pd.ExcelWriter(os.path.join(cur_dir, 'stats.xlsx'), engine = "openpyxl") as writer:
+
     #dailyVolumesF1.to_excel(writer, sheet_name = 'dailyVolumes')
     dailyBowersF1.to_excel(writer, sheet_name = 'dailyBowers')
     #hourlyVolumesF1.to_excel(writer, sheet_name = 'hourlyVolumes')
@@ -475,17 +526,23 @@ with pd.ExcelWriter(os.path.join(cur_dir, 'stats.xlsx'), engine = "openpyxl") as
     #hourlyVolumesPar.to_excel(writer, sheet_name = 'hourlyVolumes', startrow = 13)
     hourlyAvgBowersPar.to_excel(writer, sheet_name = 'hourlyAvgBowers', startrow = 13)
 
-#displaying data
+
+with pd.ExcelWriter(os.path.join(cur_dir, 'novastats.xlsx'), engine = "openpyxl") as writer:
+
+    dailyNova1.to_excel(writer, sheet_name = 'Nova1')
+    dailyNova2.to_excel(writer, sheet_name = 'Nova2')
+    dailyNova2Plus.to_excel(writer, sheet_name = 'Nova2+')
+    dailyNova3.to_excel(writer, sheet_name = 'Nova3')
+    hourlyNova1.to_excel(writer, sheet_name = 'Nova1', startcol = 5)
+    hourlyNova2.to_excel(writer, sheet_name = 'Nova2', startcol = 6)
+    hourlyNova2Plus.to_excel(writer, sheet_name = 'Nova2+', startcol = 6)
+    hourlyNova3.to_excel(writer, sheet_name = 'Nova3', startcol = 6)
+
+    writer.save()
 '''
-print('Daily Bowers F1: \n', dailyBowersF1)
-print('\n\n\n')
-print('Daily Bowers Parentals: \n', dailyBowersPar)
-print('\n\n\n')
-print('Hourly Average Bowers F1: \n', hourlyAvgBowersF1)
-print('\n\n\n')
-print('Hourly Average Bowers Parentals: \n', hourlyAvgBowersPar)
-'''
-'''
+
+
+'''displaying nova tables
 print(dailyNova1)
 print()
 print(hourlyNova1)
@@ -502,37 +559,111 @@ print(dailyNova3)
 print()
 print(hourlyNova3)
 '''
+
+
+#dropping nan rows for LME analysis
+dailyNova1.dropna(axis = 0, how = 'any', inplace = True)
+hourlyNova1.dropna(axis = 0, how = 'any', inplace = True)
+dailyNova2.dropna(axis = 0, how = 'any', inplace = True)
+hourlyNova2.dropna(axis = 0, how = 'any', inplace = True)
+dailyNova2Plus.dropna(axis = 0, how = 'any', inplace = True)
+hourlyNova2Plus.dropna(axis = 0, how = 'any', inplace = True)
+dailyNova3.dropna(axis = 0, how = 'any', inplace = True)
+hourlyNova3.dropna(axis = 0, how = 'any', inplace = True)
+
+
+'''linear mixed effects analysis
+md1D = smf.mixedlm("BowerIndex ~ Day", dailyNova1, groups = dailyNova1["Trial"])
+mdf1D = md1D.fit(reml = False)
+print("\nF1 Daily:\n", mdf1D.summary())
+
+md1H = smf.mixedlm("BowerIndex ~ Day", hourlyNova1, groups = hourlyNova1["Trial"])
+mdf1H = md1H.fit(reml = False)
+print("\nF1 Daily Hourly Averages:\n", mdf1H.summary())
+
+md2D = smf.mixedlm("BowerIndex ~ Day + Lineage + Day:Lineage", dailyNova2, groups = dailyNova2["Trial"])
+mdf2D = md2D.fit(reml = False)
+print("\nF1 (Lineage Split) Daily:\n", mdf2D.summary())
+
+md2H = smf.mixedlm("BowerIndex ~ Day + Lineage + Day:Lineage", hourlyNova2, groups = hourlyNova2["Trial"])
+mdf2H = md2H.fit(reml = False)
+print("\nF1 (Lineage Split) Daily Hourly Averages:\n", mdf2H.summary())
+
+md2DPlus = smf.mixedlm("BowerIndex ~ Day + Lineage + Day:Lineage", dailyNova2Plus, groups = dailyNova2Plus["Trial"])
+mdf2DPlus = md2DPlus.fit(reml = False)
+print("\nAll Trials (Lineage Split) Daily:\n", mdf2DPlus.summary())
+
+md2HPlus = smf.mixedlm("BowerIndex ~ Day + Lineage + Day:Lineage", hourlyNova2Plus, groups = hourlyNova2Plus["Trial"])
+mdf2HPlus = md2HPlus.fit(reml = False)
+print("\nAll Trials (Lineage Split) Daily Hourly Averages:\n", mdf2HPlus.summary())
+
+md3D = smf.mixedlm("BowerIndex ~ Day + F1Bool + Day:F1Bool", dailyNova3, groups = dailyNova3["Trial"])
+mdf3D = md3D.fit(reml = False)
+print("\nAll Trials (F1 vs Parental) Daily:\n", mdf3D.summary())
+
+md3H = smf.mixedlm("BowerIndex ~ Day + F1Bool + Day:F1Bool", hourlyNova3, groups = hourlyNova3["Trial"])
+mdf3H = md3H.fit(reml = False)
+print("\nAll Trials (F1 vs Parental) Daily Hourly Averages:\n", mdf3H.summary())
 '''
-nova1D = AnovaRM(dailyNova1, 'BowerIndex', 'Trial', within = ['Day'])
-nova1H = AnovaRM(hourlyNova1, 'BowerIndex', 'Trial', within = ['Day'])
 
-nova2D = AnovaRM(dailyNova2, 'BowerIndex', 'Trial', within = ['Day', 'Lineage'])
-nova2H = AnovaRM(hourlyNova2, 'BowerIndex', 'Trial', within = ['Day', 'Lineage'])
 
-nova2PlusD = AnovaRM(dailyNova2Plus, 'BowerIndex', 'Trial', within = ['Day', 'Lineage'])
-nova2PlusH = AnovaRM(hourlyNova2Plus, 'BowerIndex', 'Trial', within = ['Day', 'Lineage'])
+#only plotting first 4 days
+hourlyNova2Plus = hourlyNova2Plus[hourlyNova2Plus['Day'] != 5]
 
-nova3D = AnovaRM(dailyNova3, 'BowerIndex', 'Trial', within = ['Day', 'F1Bool'])
-nova3H = AnovaRM(hourlyNova3, 'BowerIndex', 'Trial', within = ['Day', 'F1Bool'])
+hourlyNova2Minus = hourlyNova2Minus[hourlyNova2Minus['Day'] != 5]
 
-print('Nova1D: ', nova1D.fit())
-print('\n\n\n')
-print('Nova1H: ', nova1H.fit())
-print('\n\n\n')
-print('Nova2D: ', nova2D.fit())
-print('\n\n\n')
-print('Nova2H: ', nova2H.fit())
-print('\n\n\n')
-print('Nova2PlusD: ', nova2PlusD.fit())
-print('\n\n\n')
-print('Nova2PlusH: ', nova2PlusH.fit())
-print('\n\n\n')
-print('Nova3D: ', nova3D.fit())
-print('\n\n\n')
-print('Nova3H: ', nova3H.fit())
+hourlyPooled = hourlyPooled[hourlyPooled['Day'] != 5]
+
+dailyNova2Plus = dailyNova2Plus[dailyNova2Plus['Day'] != 5]
+
+dailyNova2Minus = dailyNova2Minus[dailyNova2Minus['Day'] != 5]
+
+dailyPooled = dailyPooled[dailyPooled['Day'] != 5]
+
+
+''' displaying plots
+sns.set(style = "darkgrid")
+sns.set_palette("viridis_r")
+
+dailySpeciesPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyNova2Plus)
+dailySpeciesPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+plt.title("Daily:")
+plt.show()
+
+plt.figure(2)
+hourlySpeciesPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyNova2Plus)
+hourlySpeciesPlot.set(xlabel = 'Days', ylabel = 'Bower Index')
+plt.title("Hourly:")
+plt.show()
+
+plt.figure(3)
+dailyMinusPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyNova2Minus)
+dailyMinusPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+plt.title("Daily F1 Pooled:")
+plt.show()
+
+plt.figure(4)
+hourlyMinusPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyNova2Minus)
+hourlyMinusPlot.set(xlabel = 'Days', ylabel = 'Bower Index')
+plt.title("Hourly F1 Pooled:")
+plt.show()
+
+plt.figure(5)
+dailyPooledPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyPooled)
+dailyPooledPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+plt.title("Daily Pooled:")
+plt.show()
+
+plt.figure(6)
+hourlyPooledPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyPooled)
+hourlyPooledPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+plt.title("Hourly Pooled:")
+plt.show()
 '''
+
 
 #To Do:
 
 #include nonaveraged bowerindex in one vein
-#get unbalanced anova analysis
+
+#For each metric, we want the daily, as well as the averaged hourly for building hours on building days only.
