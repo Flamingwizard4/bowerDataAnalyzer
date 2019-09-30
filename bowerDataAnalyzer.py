@@ -621,45 +621,58 @@ dailyNova2Minus = dailyNova2Minus[dailyNova2Minus['Day'] != 5]
 dailyPooled = dailyPooled[dailyPooled['Day'] != 5]
 
 
-''' displaying plots
+
+#displaying plots 2 at a time
 sns.set(style = "darkgrid")
 sns.set_palette("viridis_r")
 
 dailySpeciesPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyNova2Plus)
-dailySpeciesPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
-plt.title("Daily:")
-plt.show()
+dailySpeciesPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
+plt.title("Daily Species:")
+#plt.show()
 
-plt.figure(2)
+plt.figure(2) ###
 hourlySpeciesPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyNova2Plus)
-hourlySpeciesPlot.set(xlabel = 'Days', ylabel = 'Bower Index')
-plt.title("Hourly:")
+hourlySpeciesPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
+plt.title("Hourly Species:")
 plt.show()
 
 plt.figure(3)
 dailyMinusPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyNova2Minus)
-dailyMinusPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+dailyMinusPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
 plt.title("Daily F1 Pooled:")
-plt.show()
+#plt.show()
 
-plt.figure(4)
+plt.figure(4) ###
 hourlyMinusPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyNova2Minus)
-hourlyMinusPlot.set(xlabel = 'Days', ylabel = 'Bower Index')
+hourlyMinusPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
 plt.title("Hourly F1 Pooled:")
 plt.show()
 
-plt.figure(5)
+plt.figure(5) ###
 dailyPooledPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyPooled)
-dailyPooledPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+dailyPooledPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
 plt.title("Daily Pooled:")
-plt.show()
+#plt.show()
 
-plt.figure(6)
+plt.figure(6) ###
 hourlyPooledPlot = sns.lineplot(x = "Day", y = "BowerIndex", style = "Lineage", hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyPooled)
-hourlyPooledPlot.set(xlabel = 'Time', ylabel = 'Bower Index')
+hourlyPooledPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
 plt.title("Hourly Pooled:")
 plt.show()
-'''
+
+plt.figure(7)
+dailyIndividualsPlot = sns.lineplot(x = 'Day', y = 'BowerIndex', style = 'Trial', hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = dailyNova2Plus, dashes = False)
+dailyIndividualsPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
+plt.title("Daily Individuals:")
+#plt.show()
+
+plt.figure(8)
+hourlyIndividualsPlot = sns.lineplot(x = 'Day', y = 'BowerIndex', style = 'Trial', hue = 'Behavior', hue_order = ['Castle', 'Cross', 'Pit'], ci = 68, data = hourlyNova2Plus, dashes = False)
+hourlyIndividualsPlot.set(xlabel = 'Time (Days)', ylabel = 'Bower Index')
+plt.title("Hourly Individuals:")
+plt.show()
+
 
 
 #To Do:
